@@ -79,49 +79,55 @@ export class TimelogComponent implements OnInit {
 
   ngOnInit(): void {
     this.http.get('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json').subscribe((res) => {
-     console.log(res);     
+      console.log(res);
       let val: any = res;
       if (val != null) {
         let model: any = Object.values(val);
-        console.log(model);        
+        console.log(model);
         this.timeLogData = model[0].data;
         console.log(this.timeLogData);
         this.btnNotSubmit = true;
         this.showTable = true;
-        let currentTime = this.datePipe.transform(new Date(), 'h:mm:ss');
-        let oldTime = model[0].data[0].milliSec;  
-        let date = new Date();
-        let time = date.getTime()
-        let cTime = (time - oldTime);
-        let t = this.getYoutubeLikeToDisplay(cTime);
-        console.log(t);     
-        var array = t.split(':');
-        array = array.reverse();  
-        console.log(array,this.hour,this.minute,this.second);
-        this.timeLogData[0]['pausedTime'] = ((array[2]?array[2]:'00')+":"+array[1]+":"+array[0])
-        this.startMini(0);
+        console.log(this.timeLogData);
+        for (let i = 0; i < this.timeLogData.length; i++) {
+          if (this.timeLogData[i].status == true) {
+            let currentTime = this.datePipe.transform(new Date(), 'h:mm:ss');
+            let oldTime = model[0].data[i].milliSec;
+            let date = new Date();
+            let time = date.getTime()
+            let cTime = (time - oldTime);
+            let t = this.getYoutubeLikeToDisplay(cTime);
+            console.log(t);
+            var array = t.split(':');
+            array = array.reverse();
+            console.log(array, this.hour, this.minute, this.second);
+            this.timeLogData[i]['pausedTime'] = ((array[2] ? array[2] : '00') + ":" + array[1] + ":" + array[0]);
+            this.timeLogData[i]['status'] = false;
+            this.startMini(i);
+          }
+        }
       }
     })
   }
 
-  getYoutubeLikeToDisplay(millisec:any) {
-    var seconds:any = (millisec / 1000).toFixed(0);
-    var minutes:any = Math.floor(seconds / 60);
-    var hours:any = "";
+  getYoutubeLikeToDisplay(millisec: any) {
+    var seconds: any = (millisec / 1000).toFixed(0);
+    var minutes: any = Math.floor(seconds / 60);
+    var hours: any = "";
     if (minutes > 59) {
-        hours = Math.floor(minutes / 60);
-        hours = (hours >= 10) ? hours : "0" + hours;
-        minutes = minutes - (hours * 60);
-        minutes = (minutes >= 10) ? minutes : "0" + minutes;
+      hours = Math.floor(minutes / 60);
+      hours = (hours >= 10) ? hours : "0" + hours;
+      minutes = minutes - (hours * 60);
+      minutes = (minutes >= 10) ? minutes : "0" + minutes;
     }
 
     seconds = Math.floor(seconds % 60);
     seconds = (seconds >= 10) ? seconds : "0" + seconds;
     if (hours != "") {
-        return hours + ":" + minutes + ":" + seconds;
+      return hours + ":" + minutes + ":" + seconds;
     }
     return minutes + ":" + seconds;
-}
+  }
 
   onChange(ev: any) {
     if (ev.target.value == 'addProject') {
@@ -216,7 +222,6 @@ export class TimelogComponent implements OnInit {
           this.showTable = true;
           this.btnNotSubmit = true;
           this.start()
-          this.localstore();
           this.onDeleteData();
           this.onSendTampData(this.timeLogData);
         }
@@ -279,7 +284,7 @@ export class TimelogComponent implements OnInit {
         this.currentLocation = res.results[0].formatted;
         this.startTimmer = false;
         this.timerDisable = true;
-        this.timeLogData[i]['status'] = true;
+        this.timeLogData[i]['status'] = !this.timeLogData[i]['status'];
         this.timeLogData[i]['currentLocation'].push(this.pausedTime + '-:-' + this.currentLocation);
         var array = this.timeLogData[i]['pausedTime'].split(':');
         this.hour = parseInt(array[0]);
@@ -293,7 +298,6 @@ export class TimelogComponent implements OnInit {
   }
 
   pause() {
-    this.localstore();
     clearInterval(this.cron);
   }
 
@@ -336,15 +340,6 @@ export class TimelogComponent implements OnInit {
       }
     }
   }
-  localstore() {
-    if (this.timeLogData.length > 0) {
-      localStorage.removeItem('TimeData');
-      localStorage.setItem('TimeData', JSON.stringify(this.timeLogData));
-      let val: any = localStorage.getItem('TimeData');
-      let model = JSON.parse(val);
-      console.log(model);
-    }
-  }
 
   removeLocalData() {
     console.log(this.timeLogData);
@@ -355,7 +350,7 @@ export class TimelogComponent implements OnInit {
     this.showTable = false;
     this.btnNotSubmit = false;
     this.onDeleteData();
-    this.objTemp = '';
+    this.objTemp = null;
   }
 
   onSendTampData(data: any) {
