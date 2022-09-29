@@ -1,0 +1,197 @@
+<div class="zoho">
+    <div *ngIf="show">
+        <div class="form-info">
+            <form class="input-info" (ngSubmit)="onCkeckIn()" #formCheckIn="ngForm">
+                <table class="table table-borderless">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 250px;">
+                                <div class="p-2">
+                                    <select class="form-select" aria-label="Default select example"
+                                        (change)="onChange($event)" name="projectName" ngModel required
+                                        [disabled]="timerDisable">
+                                        <option value="{{projectDefault}}" disabled>Select Project.</option>
+                                        <option *ngFor="let projectName of projects" value="{{projectName.name}}">
+                                            {{projectName.name}}
+                                        </option>
+                                        <option class="addProjectBtn" value="addProject">Add Project</option>
+                                    </select>
+                                </div>
+                            </th>
+                            <th style="width: 250px;">
+                                <div class="p-2">
+                                    <select class="form-select" aria-label="Default select example"
+                                        (change)="onChange($event)" name="jobName" ngModel required
+                                        [disabled]="timerDisable">
+                                        <option value="{{jobDefault}}" disabled>Select Job</option>
+                                        <option *ngFor="let jobName of jobs" value="{{jobName.name}}">
+                                            {{jobName.name}}
+                                        </option>
+                                        <option value="addJob" class="addProjectBtn"><b>Add Job</b></option>
+                                    </select>
+                                </div>
+
+                            </th>
+                            <th style="width: 350px;">
+                                <div class="p-2">
+                                    <select class="form-select" aria-label="Default select example" name="workItemName"
+                                        ngModel required [disabled]="timerDisable">
+                                        <option value="{{workDefault}}" disabled>Select Work Item</option>
+                                        <option *ngFor="let item of WorkItem" value="{{item.name}}">
+                                            {{item.name}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </th>
+                            <th style="width: 80px;">
+                                <button class="btn" type="button" (click)="popup = true">
+                                    <img src="./../../../assets/images/note.png" width="20px" alt="">
+                                </button>
+
+                                <div class="overlay" *ngIf="popup">
+                                    <div class="popup">
+                                        <a class="close" (click)="popup = false">&times;</a>
+                                        <div class="form-group">
+                                            <textarea class="form-control rounded-0" name="discription"
+                                                (change)="doTextareaValueChange($event)"
+                                                id="exampleFormControlTextarea2" rows="3"
+                                                [disabled]="timerDisable">{{textareaValue}}</textarea>
+                                        </div>
+                                        <button (click)="popup = false" class="btn btn-primary btn-sm">OK</button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th style="width: 250px;">
+                                <div class="p-2">
+                                    <select class="form-select" aria-label="Default select example" name="billableName"
+                                        ngModel required [disabled]="timerDisable">
+                                        <option selected value="{{billableDefault}}">Billable</option>
+                                        <option value="Non-billable">Non-billable</option>
+                                    </select>
+                                </div>
+                            </th>
+                            <th>
+                                <button type="submit" style="width: 150px;" class="btn btn-success btn-lg btn-block"
+                                    *ngIf="startTimmer">
+                                    00:00:00
+                                </button>
+                                <button type="button" style="width: 150px;" class="btn btn-danger btn-lg btn-block"
+                                    *ngIf="!startTimmer" (click)="onCheckOut()">
+                                    <div>
+                                        {{currentTime}}
+                                    </div>
+                                </button>
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+            </form>
+        </div>
+        <div *ngIf="showTable">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            <div class="form-check">
+                                <input class="form-check-input position-static" type="checkbox" id="blankCheckbox"
+                                    value="option1" aria-label="...">
+                            </div>
+                        </th>
+                        <th scope="col">
+                            <b>{{today | date: 'MMM d,y'}}</b>
+                            <!-- <b>{{today}}</b> -->
+                        </th>
+                        <th scope="col">
+                        </th>
+                        <th scope="col">
+                        </th>
+                        <th scope="col">
+                            <!-- 3:31 -->
+                        </th>
+                        <th scope="col">
+                        </th>
+                        <th scope="col">
+                        </th>
+                    </tr>
+                </thead>
+                <tr *ngFor="let tableData of timeLogData; let i = index">
+                    <th scope="row" style="text-align: center;width: 100px;padding-left: 17px ;">
+                        <div class="form-check">
+                            <input class="form-check-input position-static" type="checkbox" id="blankCheckbox"
+                                value="option1" aria-label="...">
+                        </div>
+                    </th>
+                    <td style="width: 350px;">
+                        <span>{{tableData.jobName}} .{{tableData.projectName}} </span>
+                    </td>
+                    <td style="width: 250px;">
+                        {{ tableData.workItemName }}
+                    </td>
+                    <td style="width: 200px;">
+                        {{tableData.billableName}}
+                    </td>
+                    <td style="width: 250px;">
+                        {{tableData.status ? currentTime : tableData.pausedTime}}
+                    </td>
+                    <td style="width: 100px;">
+                        <!-- {{pausedTime}}{{tableData.status}}{{currentTime}} {{tableData.pausedTime}} -->
+                        <button class="btn" type="button" (click)="popup1 = true">
+                            <img src="./../../../assets/images/note2.png" width="25px" alt="">
+                        </button>
+                        <div class="overlay" *ngIf="popup1">
+                            <div class="popup1">
+                                <a class="close" (click)="popup1 = false">&times;</a>
+                                <div class="form-group">
+                                    <textarea *ngIf="texttrue" class="form-control rounded-0" name="discription2"
+                                        (keyup.enter)="doTextareaValueChange2($event)" rows="1" #val
+                                        (keyup.enter)="val.value = ''"></textarea>
+                                    <br>
+                                    <div *ngFor="let text of textareaValue2">
+                                        <div style="border-bottom:1px solid lightgrey;">
+                                            {{text}}<br>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="width: 200px;">
+                        <div *ngIf="!tableData.status" (click)="startMini(i)">
+                            <img src="./../../../assets/images/start.png" width="12px" alt="">
+                        </div>
+                        <div *ngIf="tableData.status" (click)="onCheckOut12(i)">
+                            <img src="./../../../assets/images/pause.png" width="17px" alt="">
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div *ngIf="btnNotSubmit">
+            <button class="btn btn-dark" [disabled]="timerDisable" (click)="removeLocalData()"
+                style="float: right;margin:30px;">NOT SUBMITTED</button>
+        </div>
+    </div>
+    <br><br><br>
+    <hr>
+    <div>
+        <pre>
+            <code>
+                {{ objTemp | json }}
+            </code>
+        </pre>
+    </div>
+    <div class="sForm" *ngIf="!show">
+        <h2>{{title}}</h2>
+        <form (ngSubmit)="onSubmit()" #f="ngForm">
+            <div class="form-group mb-2">
+                <label for="exampleInputEmail1">{{addName}} Name:</label>
+                <input type="email" class="form-control" id="{{addName}}" name="{{addName}}"
+                    placeholder="Enter Project Name ....." ngModel required>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>|<button type="button" class="btn btn-danger"
+                (click)="cancel()">Cancel</button>
+        </form>
+    </div>
+</div>
+
+

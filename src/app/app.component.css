@@ -1,0 +1,14 @@
+.myTestApp {
+    width :98%;
+    margin:1%;
+    padding: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.all {
+    margin:0 auto;
+    max-width: 1500px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+}
