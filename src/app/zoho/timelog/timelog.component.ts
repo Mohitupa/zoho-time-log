@@ -67,6 +67,9 @@ export class TimelogComponent implements OnInit {
   popup1 = false;
   name = 'Angular';
   objTemp: any;
+  textareaValue = '';
+  textareaValue2: any = [];
+  texttrue = true;
 
   constructor(private timeTrakService: TimeTrakerService, private http: HttpClient, private datePipe: DatePipe) { }
 
@@ -79,16 +82,12 @@ export class TimelogComponent implements OnInit {
 
   ngOnInit(): void {
     this.http.get('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json').subscribe((res) => {
-      console.log(res);
       let val: any = res;
       if (val != null) {
         let model: any = Object.values(val);
-        console.log(model);
         this.timeLogData = model[0].data;
-        console.log(this.timeLogData);
         this.btnNotSubmit = true;
         this.showTable = true;
-        console.log(this.timeLogData);
         for (let i = 0; i < this.timeLogData.length; i++) {
           if (this.timeLogData[i].status == true) {
             let currentTime = this.datePipe.transform(new Date(), 'h:mm:ss');
@@ -97,10 +96,8 @@ export class TimelogComponent implements OnInit {
             let time = date.getTime()
             let cTime = (time - oldTime);
             let t = this.getYoutubeLikeToDisplay(cTime);
-            console.log(t);
             var array = t.split(':');
             array = array.reverse();
-            console.log(array, this.hour, this.minute, this.second);
             this.timeLogData[i]['pausedTime'] = ((array[2] ? array[2] : '00') + ":" + array[1] + ":" + array[0]);
             this.timeLogData[i]['status'] = false;
             this.startMini(i);
@@ -148,7 +145,6 @@ export class TimelogComponent implements OnInit {
 
   onSubmit() {
     let key = Object.keys(this.form.value);
-    console.log(key);
     if (key[0] == 'Project') {
       this.projects.push({ name: Object.values(this.form.value) });
     }
@@ -159,26 +155,19 @@ export class TimelogComponent implements OnInit {
     this.form.reset();
   }
 
-  textareaValue = '';
   doTextareaValueChange(ev: any) {
     try {
       this.textareaValue = ev.target.value;
-      console.log(ev.target.value);
     } catch (e) {
       console.info('could not set textarea-value');
     }
   }
 
-  texttrue = true;
-  textareaValue2: any = [];
   doTextareaValueChange2(ev: any) {
-    console.log(ev);
     this.texttrue = false;
     try {
       this.textareaValue2.push(ev.target.value);
       this.texttrue = true;
-      console.log(ev.target.value);
-      console.log(this.textareaValue2);
     } catch (e) {
       console.info('could not set textarea-value');
     }
@@ -186,8 +175,6 @@ export class TimelogComponent implements OnInit {
 
 
   onCkeckIn() {
-    console.log();
-
     if (this.formCheck.valid && this.textareaValue != '') {
       this.getlocation('checkIN');
     }
@@ -240,6 +227,7 @@ export class TimelogComponent implements OnInit {
   onCheckOut() {
     this.getlocation('checkOut');
   }
+
   onCheckOut12(i: any) {
     if (!navigator.geolocation) {
       console.log('not supported geo location');
@@ -258,7 +246,6 @@ export class TimelogComponent implements OnInit {
         this.timeLogData[i]['currentLocation'].push(this.pausedTime + '-:-' + this.currentLocation);
         this.startTimmer = true;
         this.timerDisable = false;
-        console.log(this.timeLogData);
         this.reset();
         this.pause();
         this.onDeleteData();
@@ -273,6 +260,7 @@ export class TimelogComponent implements OnInit {
     this.pause();
     this.cron = setInterval(() => { this.timer(); }, 10);
   }
+
   startMini(i: any) {
     if (!navigator.geolocation) {
       console.log('not supported geo location');
@@ -341,8 +329,51 @@ export class TimelogComponent implements OnInit {
     }
   }
 
+  onSendTampData(data: any) {
+    let myData: any = {
+      id: 1,
+      data: data
+    }
+    this.http.post('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json', myData).subscribe(()=> {
+      this.onGetTampData2()
+    });
+  }
+
+  onGetTampData2() {
+    this.http.get('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json').subscribe()
+  }
+
+  onGetTampData() {
+    this.http.get('https://zoho-time-traker-default-rtdb.firebaseio.com/submittedTimeLog.json').subscribe((res) => {
+      this.objTemp = res;
+    })
+  }
+
   removeLocalData() {
-    console.log(this.timeLogData);
+    // let totalHour = 0;
+    // let totalMin = 0;
+    // let totalSec = 0;
+   
+    // for(let i=0;i<this.timeLogData.length;i++) {
+    //   var time = this.timeLogData[i].pausedTime + totalHour;
+    //   var array = time.split(':');
+    //   totalHour = totalHour + array[0];
+    //   totalMin = totalMin + array[1];
+    //   totalSec = totalSec + array[2];
+    // }
+
+    // console.log(totalHour+':'+totalMin+':'+totalSec);
+    
+    let myData: any = {
+      zohoMoh: 1,
+      data: this.timeLogData,
+      // totalHour: totalHour+':'+totalMin+':'+totalSec
+    }
+    this.http.post('https://zoho-time-traker-default-rtdb.firebaseio.com/submittedTimeLog.json', myData).subscribe((res) => {
+      console.log(res);
+      this.onGetTampData();
+    })
+
     localStorage.removeItem('TimeData');
     this.timeLogData = [];
     this.startTimmer = true;
@@ -351,24 +382,6 @@ export class TimelogComponent implements OnInit {
     this.btnNotSubmit = false;
     this.onDeleteData();
     this.objTemp = null;
-  }
-
-  onSendTampData(data: any) {
-    let myData: any = {
-      id: 1,
-      data: data
-    }
-    this.http.post('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json', myData).subscribe((res) => {
-      console.log(res);
-      this.onGetTampData();
-    })
-  }
-
-  onGetTampData() {
-    this.http.get('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json').subscribe((res) => {
-      this.objTemp = res;
-      console.log(this.objTemp);
-    })
   }
 
   onDeleteData() {
