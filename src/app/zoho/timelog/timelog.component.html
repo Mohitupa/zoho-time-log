@@ -167,19 +167,14 @@
             </table>
         </div>
         <div *ngIf="btnNotSubmit">
+            <button class="btn btn-dark" (click)="showData()"
+                style="float: right;margin:30px;">Show Timelog</button>
             <button class="btn btn-dark" [disabled]="timerDisable" (click)="removeLocalData()"
                 style="float: right;margin:30px;">NOT SUBMITTED</button>
         </div>
     </div>
     <br><br><br>
-    <hr>
-    <div>
-        <pre>
-            <code>
-                {{ objTemp | json }}
-            </code>
-        </pre>
-    </div>
+
     <div class="sForm" *ngIf="!show">
         <h2>{{title}}</h2>
         <form (ngSubmit)="onSubmit()" #f="ngForm">

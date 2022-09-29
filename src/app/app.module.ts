@@ -17,6 +17,7 @@ import { Sound02Component } from './music/sound02/sound02.component';
 import { TimelogComponent } from './zoho/timelog/timelog.component';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
+import { ShowTimeLogDataComponent } from './zoho/show-time-log-data/show-time-log-data.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { DatePipe } from '@angular/common';
     SoundComponent,
     Sound02Component,
     TimelogComponent,
+    ShowTimeLogDataComponent,
   ],
   imports: [
     BrowserModule,

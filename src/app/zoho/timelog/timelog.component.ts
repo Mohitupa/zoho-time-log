@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { TimeTrakerService } from 'src/app/services/time-traker.service';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-timelog',
@@ -60,7 +61,6 @@ export class TimelogComponent implements OnInit {
   indexCurrent: any;
   lng: any;
   lat: any;
-  baseUrl = 'https://api.positionstack.com/v1/reverse';
   loc: any;
   btnNotSubmit = false;
   popup = false;
@@ -71,14 +71,7 @@ export class TimelogComponent implements OnInit {
   textareaValue2: any = [];
   texttrue = true;
 
-  constructor(private timeTrakService: TimeTrakerService, private http: HttpClient, private datePipe: DatePipe) { }
-
-  // @HostListener("window:beforeunload", ["$event"]) unloadHandler(event: Event) {
-  //   let result = alert("Please Stop the timer before leaving the Page.");
-
-  //   console.log('dfadsfdf');
-  //   event.returnValue = false; // stay on same page
-  // }
+  constructor(private timeTrakService: TimeTrakerService, private http: HttpClient, private datePipe: DatePipe,private route:Router) { }
 
   ngOnInit(): void {
     this.http.get('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json').subscribe((res) => {
@@ -197,6 +190,7 @@ export class TimelogComponent implements OnInit {
           let val: any = this.formCheck.value;
           val['startTime'] = this.datePipe.transform(date, 'h:mm:ss');
           val['milliSec'] = date.getTime();
+          val['milliSecStart'] = [date.getTime()];
           val['pausedTime'] = this.pausedTime;
           val['status'] = true;
           val['currentLocation'] = [val['startTime'] + '-:-' + this.currentLocation];
@@ -215,8 +209,6 @@ export class TimelogComponent implements OnInit {
 
         if (funct == 'checkOut') {
           this.pausedTime = this.currentTime;
-          this.startTimmer = true;
-          this.timerDisable = false;
           this.reset();
           this.pause();
         }
@@ -225,6 +217,8 @@ export class TimelogComponent implements OnInit {
   }
 
   onCheckOut() {
+    this.startTimmer = true;
+    this.timerDisable = false;
     this.getlocation('checkOut');
   }
 
@@ -236,13 +230,17 @@ export class TimelogComponent implements OnInit {
       this.lat = pos.coords.latitude;
       this.lng = pos.coords.longitude;
       this.timeTrakService.getAddress(this.lat, this.lng).subscribe((res: any) => {
-
         this.currentLocation = res.results[0].formatted;
         this.pausedTime = this.currentTime;
         this.timeLogData[i]['status'] = !this.timeLogData[i]['status'];
         this.timeLogData[i]['pausedTime'] = this.pausedTime;
         this.timeLogData[i]['desc2'] = this.textareaValue2;
-        this.getlocation('pausedOut');
+        let date = new Date();
+        if (this.timeLogData[i]['milliSecEnd']) {
+          this.timeLogData[i]['milliSecEnd'].push(date.getTime());
+        } else {
+          this.timeLogData[i]['milliSecEnd'] = [date.getTime()];
+        }
         this.timeLogData[i]['currentLocation'].push(this.pausedTime + '-:-' + this.currentLocation);
         this.startTimmer = true;
         this.timerDisable = false;
@@ -275,6 +273,8 @@ export class TimelogComponent implements OnInit {
         this.timeLogData[i]['status'] = !this.timeLogData[i]['status'];
         this.timeLogData[i]['currentLocation'].push(this.pausedTime + '-:-' + this.currentLocation);
         var array = this.timeLogData[i]['pausedTime'].split(':');
+        let date = new Date();
+        this.timeLogData[i]['milliSecStart'].push(date.getTime());
         this.hour = parseInt(array[0]);
         this.minute = parseInt(array[1]);
         this.second = parseInt(array[2]);
@@ -334,54 +334,44 @@ export class TimelogComponent implements OnInit {
       id: 1,
       data: data
     }
-    this.http.post('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json', myData).subscribe(()=> {
+    this.http.post('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json', myData).subscribe(() => {
       this.onGetTampData2()
     });
   }
+
 
   onGetTampData2() {
     this.http.get('https://zoho-time-traker-default-rtdb.firebaseio.com/postTamp.json').subscribe()
   }
 
-  onGetTampData() {
-    this.http.get('https://zoho-time-traker-default-rtdb.firebaseio.com/submittedTimeLog.json').subscribe((res) => {
-      this.objTemp = res;
-    })
-  }
-
   removeLocalData() {
-    // let totalHour = 0;
-    // let totalMin = 0;
-    // let totalSec = 0;
-   
-    // for(let i=0;i<this.timeLogData.length;i++) {
-    //   var time = this.timeLogData[i].pausedTime + totalHour;
-    //   var array = time.split(':');
-    //   totalHour = totalHour + array[0];
-    //   totalMin = totalMin + array[1];
-    //   totalSec = totalSec + array[2];
-    // }
+    let total: any = 0;
+    let totalTime = '00:00:00';
 
-    // console.log(totalHour+':'+totalMin+':'+totalSec);
-    
+    for (let i = 0; i < this.timeLogData.length; i++) {
+      for (let j = 0; j < this.timeLogData[i].milliSecStart.length; j++) {
+        total = (this.timeLogData[i].milliSecEnd[j] - this.timeLogData[i].milliSecStart[j]) + total
+      }
+    }
+    totalTime = this.getYoutubeLikeToDisplay(total);
     let myData: any = {
       zohoMoh: 1,
       data: this.timeLogData,
-      // totalHour: totalHour+':'+totalMin+':'+totalSec
+      totalHour: totalTime
     }
     this.http.post('https://zoho-time-traker-default-rtdb.firebaseio.com/submittedTimeLog.json', myData).subscribe((res) => {
-      console.log(res);
-      this.onGetTampData();
+      this.timeLogData = [];
+      this.startTimmer = true;
+      this.timerDisable = false;
+      this.showTable = false;
+      this.btnNotSubmit = false;
+      this.onDeleteData();
+      this.objTemp = null;
     })
+  }
 
-    localStorage.removeItem('TimeData');
-    this.timeLogData = [];
-    this.startTimmer = true;
-    this.timerDisable = false;
-    this.showTable = false;
-    this.btnNotSubmit = false;
-    this.onDeleteData();
-    this.objTemp = null;
+  showData() {
+      this.route.navigate(['showTimeLog'])
   }
 
   onDeleteData() {
